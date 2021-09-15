@@ -192,6 +192,7 @@ public class Megaman2 : MonoBehaviour
         startingTimeSeconds = (int) BombInfo.GetTime();
         day = DateTime.Now.Day;
         month = DateTime.Now.Month;
+        Debug.LogFormat(@"[Mega Man 2 #{0}] Version: 2.0", moduleId);
 
         // ** RULE SEED ** //
         var rnd = RuleSeedable.GetRNG();
@@ -241,31 +242,44 @@ public class Megaman2 : MonoBehaviour
             }
         }
 
-        // These must all have at least 3 because each of them can potentially occur 3 times
+        // These must all have at least 4 because each of them can potentially occur 4 times.
+        // Some used to have only 3, which was a bug, but we want to retain the Seed 1 rules from before the fix
         var allAABatteries = BombInfo.GetBatteryCount(Battery.AA) + BombInfo.GetBatteryCount(Battery.AAx3) + BombInfo.GetBatteryCount(Battery.AAx4);
-        var brules = rnd.ShuffleFisherYates(newArray(
+        var brules = newArray(
             new EdgeworkRule("# of batteries", BombInfo.GetBatteryCount()),
             new EdgeworkRule("# of D batteries", BombInfo.GetBatteryCount(Battery.D)),
             new EdgeworkRule("# of AA batteries", allAABatteries),
-            new EdgeworkRule("# of battery holders", BombInfo.GetBatteryHolderCount())).ToList());
+            new EdgeworkRule("# of battery holders", BombInfo.GetBatteryHolderCount())).ToList();
 
-        var irules = rnd.ShuffleFisherYates(newArray(
+        var irules = newArray(
             new EdgeworkRule("# of indicators", BombInfo.GetIndicators().Count()),
             new EdgeworkRule("# of lit indicators", BombInfo.GetOnIndicators().Count()),
-            new EdgeworkRule("# of unlit indicators", BombInfo.GetOffIndicators().Count())).ToList());
+            new EdgeworkRule("# of unlit indicators", BombInfo.GetOffIndicators().Count())).ToList();
+        if (rnd.Seed != 1)
+            irules.Add(new EdgeworkRule("# of indicators with a vowel", BombInfo.GetIndicators().Count(ind => "AEIOU".Contains(ind))));
 
-        var prules = rnd.ShuffleFisherYates(newArray(
+        var prules = newArray(
             new EdgeworkRule("# of ports", BombInfo.GetPortCount()),
             new EdgeworkRule("# of port types", BombInfo.CountUniquePorts()),
-            new EdgeworkRule("# of port plates", BombInfo.GetPortPlates().Count())).ToList());
+            new EdgeworkRule("# of port plates", BombInfo.GetPortPlates().Count())).ToList();
+        if (rnd.Seed != 1)
+            prules.Add(new EdgeworkRule("# of duplicated port types", BombInfo.GetPorts().GroupBy(p => p).Count(gr => gr.Count() > 1)));
 
-        var srules = rnd.ShuffleFisherYates(newArray(
+        var srules = newArray(
             new EdgeworkRule("first SN digit", BombInfo.GetSerialNumberNumbers().First()),
             new EdgeworkRule("second SN digit", BombInfo.GetSerialNumberNumbers().Skip(1).First()),
-            new EdgeworkRule("last SN digit", BombInfo.GetSerialNumberNumbers().Last())).ToList());
+            new EdgeworkRule("last SN digit", BombInfo.GetSerialNumberNumbers().Last())).ToList();
+        if (rnd.Seed != 1)
+            srules.Add(new EdgeworkRule("sum of SN digits", BombInfo.GetSerialNumberNumbers().Sum()));
+
+        rnd.ShuffleFisherYates(brules);
+        rnd.ShuffleFisherYates(irules);
+        rnd.ShuffleFisherYates(prules);
+        rnd.ShuffleFisherYates(srules);
 
         var inds = rnd.ShuffleFisherYates(new List<string> { "SND", "CLR", "CAR", "IND", "FRQ", "SIG", "NSA", "MSA", "TRN", "BOB", "FRK" });
         var ports = rnd.ShuffleFisherYates(new List<Port> { Port.DVI, Port.Parallel, Port.PS2, Port.RJ45, Port.Serial, Port.StereoRCA });
+
         var operatorNames = new[] { "=", "≤", "≥", "≠" };
 
         var ops = new Func<int, int, int, bool>((x, y, op) =>
