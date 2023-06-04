@@ -194,6 +194,15 @@ public class Megaman2 : MonoBehaviour
         month = DateTime.Now.Month;
         Debug.LogFormat(@"[Mega Man 2 #{0}] Version: 2.0", moduleId);
 
+        // Decide the master & weapon to show on the module before rule seed so that we can correctly evaluate the “number of robot masters that are alive” condition
+        var availableRobotMasterIxs = Enumerable.Range(0, 8).ToList();
+        int ix = Random.Range(0, availableRobotMasterIxs.Count);
+        selectedMaster = availableRobotMasterIxs[ix];
+        availableRobotMasterIxs.RemoveAt(ix);
+        selectedWeapon = availableRobotMasterIxs[Random.Range(0, availableRobotMasterIxs.Count)];
+
+
+
         // ** RULE SEED ** //
         var rnd = RuleSeedable.GetRNG();
         Debug.LogFormat(@"[Mega Man 2 #{0}] Using rule seed: {1}", moduleId, rnd.Seed);
@@ -354,7 +363,10 @@ public class Megaman2 : MonoBehaviour
                 new EdgeworkRule("total number of Mega Man 2 modules on the bomb", BombInfo.GetSolvableModuleNames().Count(m => m == "Mega Man 2")))).ToList();
         if (rnd.Seed != 1 && !anyETanksConditions)
         {
-            var aliveTmp = aliveConditions.Count(rule => rule.Evaluate(0));
+            var aliveTmp = 0;
+            for (var i = 0; i < aliveConditions.Length; i++)
+                if (i == selectedMaster || (i != selectedWeapon && aliveConditions[i].Evaluate(0)))
+                    aliveTmp++;
             possibleETanksRules.Add(new EdgeworkRule("total number of robot masters that are alive", aliveTmp));
             possibleETanksRules.Add(new EdgeworkRule("total number of robot masters that are dead", 8 - aliveTmp));
         }
@@ -364,13 +376,6 @@ public class Megaman2 : MonoBehaviour
 
         // ** END RULE SEED GENERATION ** //
 
-
-        var availableRobotMasterIxs = Enumerable.Range(0, 8).ToList();
-
-        int ix = Random.Range(0, availableRobotMasterIxs.Count);
-        selectedMaster = availableRobotMasterIxs[ix];
-        availableRobotMasterIxs.RemoveAt(ix);
-        selectedWeapon = availableRobotMasterIxs[Random.Range(0, availableRobotMasterIxs.Count)];
 
         RobotMastersDisplay.material.mainTexture = RobotMasters.First(tx => tx.name == robotMasters[selectedMaster]);
         WeaponsDisplay.material.mainTexture = Weapons.First(tx => tx.name == robotMasters[selectedWeapon]);
