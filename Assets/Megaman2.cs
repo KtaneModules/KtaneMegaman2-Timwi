@@ -265,7 +265,7 @@ public class Megaman2 : MonoBehaviour
             new EdgeworkRule("# of lit indicators", BombInfo.GetOnIndicators().Count()),
             new EdgeworkRule("# of unlit indicators", BombInfo.GetOffIndicators().Count())).ToList();
         if (rnd.Seed != 1)
-            irules.Add(new EdgeworkRule("# of indicators with a vowel", BombInfo.GetIndicators().Count(ind => "AEIOU".Contains(ind))));
+            irules.Add(new EdgeworkRule("# of indicators with a vowel", BombInfo.GetIndicators().Count(ind => "AEIOU".Intersect(ind).Any())));
 
         var prules = newArray(
             new EdgeworkRule("# of ports", BombInfo.GetPortCount()),
