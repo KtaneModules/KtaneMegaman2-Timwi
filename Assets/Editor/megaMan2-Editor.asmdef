@@ -1,0 +1,10 @@
+{
+  "name": "megaMan2-Editor",
+  "references": [
+    "megaMan2"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": []
+}
